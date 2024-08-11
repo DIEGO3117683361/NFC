@@ -57,15 +57,16 @@
                 }
 
                 try {
+                    // Inicia la escritura NFC
                     await writer.write({ records: [{ recordType: "text", data: message }] });
                     statusElement.textContent = "Mensaje enviado exitosamente!";
                 } catch (error) {
                     console.error("Error al escribir en NFC:", error);
-                    statusElement.textContent = "Error al enviar el mensaje.";
+                    statusElement.textContent = "Error al enviar el mensaje. Asegúrate de que tu dispositivo es compatible.";
                 }
             });
         } else {
-            statusElement.textContent = "Este navegador no soporta NFC.";
+            statusElement.textContent = "Este navegador no soporta NFC o la funcionalidad NFC no está habilitada.";
         }
     </script>
 
