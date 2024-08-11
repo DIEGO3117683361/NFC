@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Mensaje NFC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            text-align: center;
+            padding: 50px;
+        }
+        input, button {
+            font-size: 18px;
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 300px;
+        }
+        button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Enviar Mensaje con NFC</h1>
+    <p>Escribe tu mensaje y acerca tu dispositivo a una etiqueta NFC compatible.</p>
+
+    <input type="text" id="nfcMessage" placeholder="Escribe tu mensaje aquí..." required>
+    <button id="sendMessage">Enviar Mensaje</button>
+
+    <p id="status"></p>
+
+    <script>
+        const sendMessageButton = document.getElementById('sendMessage');
+        const statusElement = document.getElementById('status');
+
+        // Verifica si el navegador soporta Web NFC API
+        if ('NDEFWriter' in window) {
+            const writer = new NDEFWriter();
+
+            sendMessageButton.addEventListener('click', async () => {
+                const message = document.getElementById('nfcMessage').value;
+
+                if (message.trim() === "") {
+                    statusElement.textContent = "Por favor, escribe un mensaje.";
+                    return;
+                }
+
+                try {
+                    await writer.write({ records: [{ recordType: "text", data: message }] });
+                    statusElement.textContent = "Mensaje enviado exitosamente!";
+                } catch (error) {
+                    console.error("Error al escribir en NFC:", error);
+                    statusElement.textContent = "Error al enviar el mensaje.";
+                }
+            });
+        } else {
+            statusElement.textContent = "Este navegador no soporta NFC.";
+        }
+    </script>
+
+</body>
+</html>
