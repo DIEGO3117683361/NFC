@@ -3,72 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enviar Mensaje NFC</title>
+    <title>ASCLEPIO SAVE SCREEN</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
             text-align: center;
-            padding: 50px;
+            background-color: #f9f9f9;
+            color: #000;
+            margin: 20px;
         }
-        input, button {
-            font-size: 18px;
-            padding: 10px;
-            margin: 10px 0;
-            width: 100%;
-            max-width: 300px;
+        h1 {
+            font-size: 2em;
+        }
+        label, select, button {
+            font-size: 1.2em;
+            margin: 10px;
         }
         button {
-            background-color: #333;
-            color: #fff;
+            background-color: black;
+            color: white;
             border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
             cursor: pointer;
+            transition: 0.3s;
         }
-        button:hover {
-            background-color: #555;
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #444;
+        }
+        video {
+            width: 80%;
+            margin-top: 20px;
+            border-radius: 20px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
 <body>
-
-    <h1>Enviar Mensaje con NFC</h1>
-    <p>Escribe tu mensaje y acerca tu dispositivo a una etiqueta NFC compatible.</p>
-
-    <input type="text" id="nfcMessage" placeholder="Escribe tu mensaje aquí..." required>
-    <button id="sendMessage">Enviar Mensaje</button>
-
-    <p id="status"></p>
+    <h1>ASCLEPIO SAVE</h1>
+    <label>
+        <input type="checkbox" id="audioCheck"> Grabar audio
+    </label>
+    <select id="audioSource" disabled>
+        <option value="none">Sin audio</option>
+        <option value="microphone">Micrófono</option>
+        <option value="system">Sonido del sistema</option>
+    </select>
+    <br><br>
+    <button id="start">Iniciar Grabación</button>
+    <button id="stop" disabled>Detener Grabación</button>
+    <br><br>
+    <video id="video" controls></video>
 
     <script>
-        const sendMessageButton = document.getElementById('sendMessage');
-        const statusElement = document.getElementById('status');
+        let mediaRecorder;
+        let recordedChunks = [];
 
-        // Verifica si el navegador soporta Web NFC API
-        if ('NDEFWriter' in window) {
-            const writer = new NDEFWriter();
+        document.getElementById("audioCheck").addEventListener("change", function() {
+            document.getElementById("audioSource").disabled = !this.checked;
+        });
 
-            sendMessageButton.addEventListener('click', async () => {
-                const message = document.getElementById('nfcMessage').value;
-
-                if (message.trim() === "") {
-                    statusElement.textContent = "Por favor, escribe un mensaje.";
-                    return;
+        document.getElementById("start").addEventListener("click", async () => {
+            try {
+                let options = { video: true, audio: false };
+                const audioOption = document.getElementById("audioSource").value;
+                if (document.getElementById("audioCheck").checked) {
+                    options.audio = true;
                 }
+                
+                const stream = await navigator.mediaDevices.getDisplayMedia(options);
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) recordedChunks.push(event.data);
+                };
 
-                try {
-                    // Inicia la escritura NFC
-                    await writer.write({ records: [{ recordType: "text", data: message }] });
-                    statusElement.textContent = "Mensaje enviado exitosamente!";
-                } catch (error) {
-                    console.error("Error al escribir en NFC:", error);
-                    statusElement.textContent = "Error al enviar el mensaje. Asegúrate de que tu dispositivo es compatible.";
-                }
-            });
-        } else {
-            statusElement.textContent = "Este navegador no soporta NFC o la funcionalidad NFC no está habilitada.";
-        }
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    document.getElementById("video").src = url;
+                    
+                    const now = new Date();
+                    const timestamp = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}_${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+                    const filename = `SAVEASCLEPIO_${timestamp}.webm`;
+                    
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                };
+                
+                mediaRecorder.start();
+                document.getElementById("start").disabled = true;
+                document.getElementById("stop").disabled = false;
+            } catch (err) {
+                console.error("Error al iniciar la grabación: ", err);
+            }
+        });
+
+        document.getElementById("stop").addEventListener("click", () => {
+            mediaRecorder.stop();
+            document.getElementById("start").disabled = false;
+            document.getElementById("stop").disabled = true;
+        });
     </script>
-
 </body>
 </html>
